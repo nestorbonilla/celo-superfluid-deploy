@@ -1,0 +1,3146 @@
+{
+  "contractName": "ERC777Helper",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.14+commit.80d49f37\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"author\":\"Superfluid\",\"kind\":\"dev\",\"methods\":{},\"title\":\"ERC777 helper library\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/libs/ERC777Helper.sol\":\"ERC777Helper\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol\":{\"keccak256\":\"0x6e306f9ab28416a9e5931f0b6e264676e8ac68fad184f9a9d8bb125c6ec23bc3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bd7fe961c914caa1fcc8223d446c1582aec4f2a32d2f06cf09c938b72cf8ce11\",\"dweb:/ipfs/QmPfEfqtUh9SA86br28HfmMyVSBe22B3oPwF8iACCF4evY\"]},\"project:/contracts/libs/ERC777Helper.sol\":{\"keccak256\":\"0x44aa72d63edfd7ec2ab69796dbe2d5c7113a798dc7189b7d4878267b1fbf1f73\",\"license\":\"AGPLv3\",\"urls\":[\"bzz-raw://b9da702f23af6dbc05c9a4b0fffff11fb707ebebf34983d35299c9e76f624e45\",\"dweb:/ipfs/QmdReo4yGy97CHLJXSFEFcqSHrbSzoMHp4yYuJK3KBHVDm\"]}},\"version\":1}",
+  "bytecode": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220f764cc236a8387a2d65085100c5a7eb61f318fac4c42df974fd8a674ed720fe264736f6c634300080e0033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220f764cc236a8387a2d65085100c5a7eb61f318fac4c42df974fd8a674ed720fe264736f6c634300080e0033",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "224:2786:61:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;224:2786:61;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "224:2786:61:-:0;;;;;;;;",
+  "source": "// SPDX-License-Identifier: AGPLv3\npragma solidity 0.8.14;\n\nimport { IERC1820Registry } from \"@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol\";\n\n/**\n * @title ERC777 helper library\n * @author Superfluid\n */\nlibrary ERC777Helper {\n\n    IERC1820Registry constant internal _ERC1820_REGISTRY =\n        IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);\n\n    // keccak256(\"ERC777TokensSender\")\n    bytes32 constant internal _TOKENS_SENDER_INTERFACE_HASH =\n        0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895;\n\n    // keccak256(\"ERC777TokensRecipient\")\n    bytes32 constant internal _TOKENS_RECIPIENT_INTERFACE_HASH =\n        0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;\n\n\n    /// @dev ERC777 operators support self structure\n    struct Operators {\n        address[] defaultOperatorsArray;\n        mapping(address => bool) defaultOperators;\n        mapping(address => mapping(address => bool)) operators;\n        mapping(address => mapping(address => bool)) revokedDefaultOperators;\n    }\n\n    function register(address token) internal {\n        _ERC1820_REGISTRY.setInterfaceImplementer(token, keccak256(\"ERC777Token\"), address(this));\n        _ERC1820_REGISTRY.setInterfaceImplementer(token, keccak256(\"ERC20Token\"), address(this));\n    }\n\n    function isOperatorFor(Operators storage self, address operator, address tokenHolder) internal view returns (bool) {\n        return operator == tokenHolder ||\n            (\n                self.defaultOperators[operator] &&\n                !self.revokedDefaultOperators[tokenHolder][operator]\n            ) ||\n            self.operators[tokenHolder][operator];\n    }\n\n    function authorizeOperator(Operators storage self, address holder, address operator) internal {\n        require(holder != operator, \"ERC777Operators: authorizing self as operator\");\n\n        if (self.defaultOperators[operator]) {\n            delete self.revokedDefaultOperators[holder][operator];\n        } else {\n            self.operators[holder][operator] = true;\n        }\n    }\n\n    function revokeOperator(Operators storage self, address holder, address operator) internal {\n        require(operator != msg.sender, \"ERC777Operators: revoking self as operator\");\n        if (self.defaultOperators[operator]) {\n            self.revokedDefaultOperators[holder][operator] = true;\n        } else {\n            delete self.operators[holder][operator];\n        }\n    }\n\n    function defaultOperators(Operators storage self) internal view returns (address[] memory) {\n        return self.defaultOperatorsArray;\n    }\n\n    function setupDefaultOperators(Operators storage self, address[] memory operators) internal {\n        // According to 777 spec: default operators should only be setup once\n        assert(self.defaultOperatorsArray.length == 0);\n        self.defaultOperatorsArray = operators;\n        for (uint i = 0; i < operators.length; ++i) {\n            self.defaultOperators[operators[i]] = true;\n        }\n    }\n\n}\n",
+  "sourcePath": "/home/runner/work/protocol-monorepo/protocol-monorepo/packages/ethereum-contracts/contracts/libs/ERC777Helper.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/libs/ERC777Helper.sol",
+    "exportedSymbols": {
+      "ERC777Helper": [
+        19345
+      ],
+      "IERC1820Registry": [
+        3015
+      ]
+    },
+    "id": 19346,
+    "license": "AGPLv3",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 19092,
+        "literals": [
+          "solidity",
+          "0.8",
+          ".14"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "35:23:61"
+      },
+      {
+        "absolutePath": "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol",
+        "file": "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol",
+        "id": 19094,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 19346,
+        "sourceUnit": 3016,
+        "src": "60:100:61",
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 19093,
+              "name": "IERC1820Registry",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 3015,
+              "src": "69:16:61",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "ERC777Helper",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "documentation": {
+          "id": 19095,
+          "nodeType": "StructuredDocumentation",
+          "src": "162:61:61",
+          "text": " @title ERC777 helper library\n @author Superfluid"
+        },
+        "fullyImplemented": true,
+        "id": 19345,
+        "linearizedBaseContracts": [
+          19345
+        ],
+        "name": "ERC777Helper",
+        "nameLocation": "232:12:61",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "constant": true,
+            "id": 19101,
+            "mutability": "constant",
+            "name": "_ERC1820_REGISTRY",
+            "nameLocation": "287:17:61",
+            "nodeType": "VariableDeclaration",
+            "scope": 19345,
+            "src": "252:123:61",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_IERC1820Registry_$3015",
+              "typeString": "contract IERC1820Registry"
+            },
+            "typeName": {
+              "id": 19097,
+              "nodeType": "UserDefinedTypeName",
+              "pathNode": {
+                "id": 19096,
+                "name": "IERC1820Registry",
+                "nodeType": "IdentifierPath",
+                "referencedDeclaration": 3015,
+                "src": "252:16:61"
+              },
+              "referencedDeclaration": 3015,
+              "src": "252:16:61",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IERC1820Registry_$3015",
+                "typeString": "contract IERC1820Registry"
+              }
+            },
+            "value": {
+              "arguments": [
+                {
+                  "hexValue": "307831383230613442373631384264453731446365386364633733614142364339353930356661443234",
+                  "id": 19099,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "number",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "332:42:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "value": "0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24"
+                }
+              ],
+              "expression": {
+                "argumentTypes": [
+                  {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                ],
+                "id": 19098,
+                "name": "IERC1820Registry",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 3015,
+                "src": "315:16:61",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_type$_t_contract$_IERC1820Registry_$3015_$",
+                  "typeString": "type(contract IERC1820Registry)"
+                }
+              },
+              "id": 19100,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "typeConversion",
+              "lValueRequested": false,
+              "names": [],
+              "nodeType": "FunctionCall",
+              "src": "315:60:61",
+              "tryCall": false,
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IERC1820Registry_$3015",
+                "typeString": "contract IERC1820Registry"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "constant": true,
+            "id": 19104,
+            "mutability": "constant",
+            "name": "_TOKENS_SENDER_INTERFACE_HASH",
+            "nameLocation": "447:29:61",
+            "nodeType": "VariableDeclaration",
+            "scope": 19345,
+            "src": "421:132:61",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bytes32",
+              "typeString": "bytes32"
+            },
+            "typeName": {
+              "id": 19102,
+              "name": "bytes32",
+              "nodeType": "ElementaryTypeName",
+              "src": "421:7:61",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes32",
+                "typeString": "bytes32"
+              }
+            },
+            "value": {
+              "hexValue": "307832396464623538396231666235666337636633393439363163316164663566386336343534373631616466373935653637666531343966363538616265383935",
+              "id": 19103,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "487:66:61",
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_18936552921575092301472466748482491067159488139731697543124572343800628504725_by_1",
+                "typeString": "int_const 1893...(69 digits omitted)...4725"
+              },
+              "value": "0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895"
+            },
+            "visibility": "internal"
+          },
+          {
+            "constant": true,
+            "id": 19107,
+            "mutability": "constant",
+            "name": "_TOKENS_RECIPIENT_INTERFACE_HASH",
+            "nameLocation": "628:32:61",
+            "nodeType": "VariableDeclaration",
+            "scope": 19345,
+            "src": "602:135:61",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bytes32",
+              "typeString": "bytes32"
+            },
+            "typeName": {
+              "id": 19105,
+              "name": "bytes32",
+              "nodeType": "ElementaryTypeName",
+              "src": "602:7:61",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes32",
+                "typeString": "bytes32"
+              }
+            },
+            "value": {
+              "hexValue": "307862323831666338633132393534643232353434646234356465333135396133393237323839356231363961383532623331346639636337363265343463353362",
+              "id": 19106,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "671:66:61",
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_80741353335606793576644178559265408063696393279619534167571325834855102858555_by_1",
+                "typeString": "int_const 8074...(69 digits omitted)...8555"
+              },
+              "value": "0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b"
+            },
+            "visibility": "internal"
+          },
+          {
+            "canonicalName": "ERC777Helper.Operators",
+            "id": 19127,
+            "members": [
+              {
+                "constant": false,
+                "id": 19110,
+                "mutability": "mutable",
+                "name": "defaultOperatorsArray",
+                "nameLocation": "835:21:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 19127,
+                "src": "825:31:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                  "typeString": "address[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 19108,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "825:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 19109,
+                  "nodeType": "ArrayTypeName",
+                  "src": "825:9:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                    "typeString": "address[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 19114,
+                "mutability": "mutable",
+                "name": "defaultOperators",
+                "nameLocation": "891:16:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 19127,
+                "src": "866:41:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                  "typeString": "mapping(address => bool)"
+                },
+                "typeName": {
+                  "id": 19113,
+                  "keyType": {
+                    "id": 19111,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "874:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "866:24:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                    "typeString": "mapping(address => bool)"
+                  },
+                  "valueType": {
+                    "id": 19112,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "885:4:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 19120,
+                "mutability": "mutable",
+                "name": "operators",
+                "nameLocation": "962:9:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 19127,
+                "src": "917:54:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                  "typeString": "mapping(address => mapping(address => bool))"
+                },
+                "typeName": {
+                  "id": 19119,
+                  "keyType": {
+                    "id": 19115,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "925:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "917:44:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                    "typeString": "mapping(address => mapping(address => bool))"
+                  },
+                  "valueType": {
+                    "id": 19118,
+                    "keyType": {
+                      "id": 19116,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "944:7:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Mapping",
+                    "src": "936:24:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                      "typeString": "mapping(address => bool)"
+                    },
+                    "valueType": {
+                      "id": 19117,
+                      "name": "bool",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "955:4:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    }
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 19126,
+                "mutability": "mutable",
+                "name": "revokedDefaultOperators",
+                "nameLocation": "1026:23:61",
+                "nodeType": "VariableDeclaration",
+                "scope": 19127,
+                "src": "981:68:61",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                  "typeString": "mapping(address => mapping(address => bool))"
+                },
+                "typeName": {
+                  "id": 19125,
+                  "keyType": {
+                    "id": 19121,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "989:7:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "981:44:61",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                    "typeString": "mapping(address => mapping(address => bool))"
+                  },
+                  "valueType": {
+                    "id": 19124,
+                    "keyType": {
+                      "id": 19122,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1008:7:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Mapping",
+                    "src": "1000:24:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                      "typeString": "mapping(address => bool)"
+                    },
+                    "valueType": {
+                      "id": 19123,
+                      "name": "bool",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "1019:4:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    }
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Operators",
+            "nameLocation": "805:9:61",
+            "nodeType": "StructDefinition",
+            "scope": 19345,
+            "src": "798:258:61",
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19158,
+              "nodeType": "Block",
+              "src": "1104:204:61",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 19135,
+                        "name": "token",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19129,
+                        "src": "1156:5:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "hexValue": "455243373737546f6b656e",
+                            "id": 19137,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "string",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "1173:13:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_stringliteral_ac7fbab5f54a3ca8194167523c6753bfeb96a445279294b6125b68cce2177054",
+                              "typeString": "literal_string \"ERC777Token\""
+                            },
+                            "value": "ERC777Token"
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_stringliteral_ac7fbab5f54a3ca8194167523c6753bfeb96a445279294b6125b68cce2177054",
+                              "typeString": "literal_string \"ERC777Token\""
+                            }
+                          ],
+                          "id": 19136,
+                          "name": "keccak256",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 4294967288,
+                          "src": "1163:9:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_keccak256_pure$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
+                            "typeString": "function (bytes memory) pure returns (bytes32)"
+                          }
+                        },
+                        "id": 19138,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1163:24:61",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "id": 19141,
+                            "name": "this",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 4294967268,
+                            "src": "1197:4:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_ERC777Helper_$19345",
+                              "typeString": "library ERC777Helper"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_ERC777Helper_$19345",
+                              "typeString": "library ERC777Helper"
+                            }
+                          ],
+                          "id": 19140,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "1189:7:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 19139,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "1189:7:61",
+                            "typeDescriptions": {}
+                          }
+                        },
+                        "id": 19142,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1189:13:61",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "id": 19132,
+                        "name": "_ERC1820_REGISTRY",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19101,
+                        "src": "1114:17:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC1820Registry_$3015",
+                          "typeString": "contract IERC1820Registry"
+                        }
+                      },
+                      "id": 19134,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "setInterfaceImplementer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 2954,
+                      "src": "1114:41:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_bytes32_$_t_address_$returns$__$",
+                        "typeString": "function (address,bytes32,address) external"
+                      }
+                    },
+                    "id": 19143,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1114:89:61",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19144,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1114:89:61"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 19148,
+                        "name": "token",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19129,
+                        "src": "1255:5:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "hexValue": "4552433230546f6b656e",
+                            "id": 19150,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "string",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "1272:12:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_stringliteral_aea199e31a596269b42cdafd93407f14436db6e4cad65417994c2eb37381e05a",
+                              "typeString": "literal_string \"ERC20Token\""
+                            },
+                            "value": "ERC20Token"
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_stringliteral_aea199e31a596269b42cdafd93407f14436db6e4cad65417994c2eb37381e05a",
+                              "typeString": "literal_string \"ERC20Token\""
+                            }
+                          ],
+                          "id": 19149,
+                          "name": "keccak256",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 4294967288,
+                          "src": "1262:9:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_keccak256_pure$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
+                            "typeString": "function (bytes memory) pure returns (bytes32)"
+                          }
+                        },
+                        "id": 19151,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1262:23:61",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "id": 19154,
+                            "name": "this",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 4294967268,
+                            "src": "1295:4:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_ERC777Helper_$19345",
+                              "typeString": "library ERC777Helper"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_contract$_ERC777Helper_$19345",
+                              "typeString": "library ERC777Helper"
+                            }
+                          ],
+                          "id": 19153,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "1287:7:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 19152,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "1287:7:61",
+                            "typeDescriptions": {}
+                          }
+                        },
+                        "id": 19155,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "1287:13:61",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "id": 19145,
+                        "name": "_ERC1820_REGISTRY",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19101,
+                        "src": "1213:17:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC1820Registry_$3015",
+                          "typeString": "contract IERC1820Registry"
+                        }
+                      },
+                      "id": 19147,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "setInterfaceImplementer",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 2954,
+                      "src": "1213:41:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_bytes32_$_t_address_$returns$__$",
+                        "typeString": "function (address,bytes32,address) external"
+                      }
+                    },
+                    "id": 19156,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1213:88:61",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19157,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1213:88:61"
+                }
+              ]
+            },
+            "id": 19159,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "register",
+            "nameLocation": "1071:8:61",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19130,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19129,
+                  "mutability": "mutable",
+                  "name": "token",
+                  "nameLocation": "1088:5:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19159,
+                  "src": "1080:13:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19128,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1080:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1079:15:61"
+            },
+            "returnParameters": {
+              "id": 19131,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1104:0:61"
+            },
+            "scope": 19345,
+            "src": "1062:246:61",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 19196,
+              "nodeType": "Block",
+              "src": "1429:251:61",
+              "statements": [
+                {
+                  "expression": {
+                    "commonType": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    },
+                    "id": 19194,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "commonType": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      },
+                      "id": 19187,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "commonType": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        "id": 19173,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "id": 19171,
+                          "name": "operator",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19164,
+                          "src": "1446:8:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "==",
+                        "rightExpression": {
+                          "id": 19172,
+                          "name": "tokenHolder",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19166,
+                          "src": "1458:11:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "src": "1446:23:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": "||",
+                      "rightExpression": {
+                        "components": [
+                          {
+                            "commonType": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            },
+                            "id": 19185,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "leftExpression": {
+                              "baseExpression": {
+                                "expression": {
+                                  "id": 19174,
+                                  "name": "self",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19162,
+                                  "src": "1503:4:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                    "typeString": "struct ERC777Helper.Operators storage pointer"
+                                  }
+                                },
+                                "id": 19175,
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "defaultOperators",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 19114,
+                                "src": "1503:21:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                  "typeString": "mapping(address => bool)"
+                                }
+                              },
+                              "id": 19177,
+                              "indexExpression": {
+                                "id": 19176,
+                                "name": "operator",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19164,
+                                "src": "1525:8:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "1503:31:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                              }
+                            },
+                            "nodeType": "BinaryOperation",
+                            "operator": "&&",
+                            "rightExpression": {
+                              "id": 19184,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "!",
+                              "prefix": true,
+                              "src": "1554:52:61",
+                              "subExpression": {
+                                "baseExpression": {
+                                  "baseExpression": {
+                                    "expression": {
+                                      "id": 19178,
+                                      "name": "self",
+                                      "nodeType": "Identifier",
+                                      "overloadedDeclarations": [],
+                                      "referencedDeclaration": 19162,
+                                      "src": "1555:4:61",
+                                      "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                        "typeString": "struct ERC777Helper.Operators storage pointer"
+                                      }
+                                    },
+                                    "id": 19179,
+                                    "isConstant": false,
+                                    "isLValue": true,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "memberName": "revokedDefaultOperators",
+                                    "nodeType": "MemberAccess",
+                                    "referencedDeclaration": 19126,
+                                    "src": "1555:28:61",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                                      "typeString": "mapping(address => mapping(address => bool))"
+                                    }
+                                  },
+                                  "id": 19181,
+                                  "indexExpression": {
+                                    "id": 19180,
+                                    "name": "tokenHolder",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 19166,
+                                    "src": "1584:11:61",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_address",
+                                      "typeString": "address"
+                                    }
+                                  },
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "nodeType": "IndexAccess",
+                                  "src": "1555:41:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                    "typeString": "mapping(address => bool)"
+                                  }
+                                },
+                                "id": 19183,
+                                "indexExpression": {
+                                  "id": 19182,
+                                  "name": "operator",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19164,
+                                  "src": "1597:8:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_address",
+                                    "typeString": "address"
+                                  }
+                                },
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "nodeType": "IndexAccess",
+                                "src": "1555:51:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_bool",
+                                  "typeString": "bool"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                              }
+                            },
+                            "src": "1503:103:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            }
+                          }
+                        ],
+                        "id": 19186,
+                        "isConstant": false,
+                        "isInlineArray": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "TupleExpression",
+                        "src": "1485:135:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      "src": "1446:174:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "||",
+                    "rightExpression": {
+                      "baseExpression": {
+                        "baseExpression": {
+                          "expression": {
+                            "id": 19188,
+                            "name": "self",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 19162,
+                            "src": "1636:4:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                              "typeString": "struct ERC777Helper.Operators storage pointer"
+                            }
+                          },
+                          "id": 19189,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "operators",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 19120,
+                          "src": "1636:14:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                            "typeString": "mapping(address => mapping(address => bool))"
+                          }
+                        },
+                        "id": 19191,
+                        "indexExpression": {
+                          "id": 19190,
+                          "name": "tokenHolder",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19166,
+                          "src": "1651:11:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1636:27:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                          "typeString": "mapping(address => bool)"
+                        }
+                      },
+                      "id": 19193,
+                      "indexExpression": {
+                        "id": 19192,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19164,
+                        "src": "1664:8:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "1636:37:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "src": "1446:227:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 19170,
+                  "id": 19195,
+                  "nodeType": "Return",
+                  "src": "1439:234:61"
+                }
+              ]
+            },
+            "id": 19197,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isOperatorFor",
+            "nameLocation": "1323:13:61",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19167,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19162,
+                  "mutability": "mutable",
+                  "name": "self",
+                  "nameLocation": "1355:4:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19197,
+                  "src": "1337:22:61",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                    "typeString": "struct ERC777Helper.Operators"
+                  },
+                  "typeName": {
+                    "id": 19161,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 19160,
+                      "name": "Operators",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 19127,
+                      "src": "1337:9:61"
+                    },
+                    "referencedDeclaration": 19127,
+                    "src": "1337:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                      "typeString": "struct ERC777Helper.Operators"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19164,
+                  "mutability": "mutable",
+                  "name": "operator",
+                  "nameLocation": "1369:8:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19197,
+                  "src": "1361:16:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19163,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1361:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19166,
+                  "mutability": "mutable",
+                  "name": "tokenHolder",
+                  "nameLocation": "1387:11:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19197,
+                  "src": "1379:19:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19165,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1379:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1336:63:61"
+            },
+            "returnParameters": {
+              "id": 19170,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19169,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19197,
+                  "src": "1423:4:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 19168,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1423:4:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1422:6:61"
+            },
+            "scope": 19345,
+            "src": "1314:366:61",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 19239,
+              "nodeType": "Block",
+              "src": "1780:288:61",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        "id": 19210,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "id": 19208,
+                          "name": "holder",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19202,
+                          "src": "1798:6:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "!=",
+                        "rightExpression": {
+                          "id": 19209,
+                          "name": "operator",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19204,
+                          "src": "1808:8:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "src": "1798:18:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "hexValue": "4552433737374f70657261746f72733a20617574686f72697a696e672073656c66206173206f70657261746f72",
+                        "id": 19211,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1818:47:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_5d4c05756585a41c5de4cdb02798324b2b07e77eae3fccbef7d8b17744695773",
+                          "typeString": "literal_string \"ERC777Operators: authorizing self as operator\""
+                        },
+                        "value": "ERC777Operators: authorizing self as operator"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_5d4c05756585a41c5de4cdb02798324b2b07e77eae3fccbef7d8b17744695773",
+                          "typeString": "literal_string \"ERC777Operators: authorizing self as operator\""
+                        }
+                      ],
+                      "id": 19207,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        4294967278,
+                        4294967278
+                      ],
+                      "referencedDeclaration": 4294967278,
+                      "src": "1790:7:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 19212,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1790:76:61",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19213,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1790:76:61"
+                },
+                {
+                  "condition": {
+                    "baseExpression": {
+                      "expression": {
+                        "id": 19214,
+                        "name": "self",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19200,
+                        "src": "1881:4:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                          "typeString": "struct ERC777Helper.Operators storage pointer"
+                        }
+                      },
+                      "id": 19215,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "defaultOperators",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 19114,
+                      "src": "1881:21:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                        "typeString": "mapping(address => bool)"
+                      }
+                    },
+                    "id": 19217,
+                    "indexExpression": {
+                      "id": 19216,
+                      "name": "operator",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 19204,
+                      "src": "1903:8:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "1881:31:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": {
+                    "id": 19237,
+                    "nodeType": "Block",
+                    "src": "1998:64:61",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 19235,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "baseExpression": {
+                                "expression": {
+                                  "id": 19227,
+                                  "name": "self",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19200,
+                                  "src": "2012:4:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                    "typeString": "struct ERC777Helper.Operators storage pointer"
+                                  }
+                                },
+                                "id": 19231,
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "operators",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 19120,
+                                "src": "2012:14:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                                  "typeString": "mapping(address => mapping(address => bool))"
+                                }
+                              },
+                              "id": 19232,
+                              "indexExpression": {
+                                "id": 19229,
+                                "name": "holder",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19202,
+                                "src": "2027:6:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "2012:22:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                "typeString": "mapping(address => bool)"
+                              }
+                            },
+                            "id": 19233,
+                            "indexExpression": {
+                              "id": 19230,
+                              "name": "operator",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19204,
+                              "src": "2035:8:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "2012:32:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "hexValue": "74727565",
+                            "id": 19234,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "bool",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "2047:4:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            },
+                            "value": "true"
+                          },
+                          "src": "2012:39:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        },
+                        "id": 19236,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2012:39:61"
+                      }
+                    ]
+                  },
+                  "id": 19238,
+                  "nodeType": "IfStatement",
+                  "src": "1877:185:61",
+                  "trueBody": {
+                    "id": 19226,
+                    "nodeType": "Block",
+                    "src": "1914:78:61",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 19224,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "nodeType": "UnaryOperation",
+                          "operator": "delete",
+                          "prefix": true,
+                          "src": "1928:53:61",
+                          "subExpression": {
+                            "baseExpression": {
+                              "baseExpression": {
+                                "expression": {
+                                  "id": 19218,
+                                  "name": "self",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19200,
+                                  "src": "1935:4:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                    "typeString": "struct ERC777Helper.Operators storage pointer"
+                                  }
+                                },
+                                "id": 19219,
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "revokedDefaultOperators",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 19126,
+                                "src": "1935:28:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                                  "typeString": "mapping(address => mapping(address => bool))"
+                                }
+                              },
+                              "id": 19221,
+                              "indexExpression": {
+                                "id": 19220,
+                                "name": "holder",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19202,
+                                "src": "1964:6:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "1935:36:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                "typeString": "mapping(address => bool)"
+                              }
+                            },
+                            "id": 19223,
+                            "indexExpression": {
+                              "id": 19222,
+                              "name": "operator",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19204,
+                              "src": "1972:8:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "1935:46:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            }
+                          },
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 19225,
+                        "nodeType": "ExpressionStatement",
+                        "src": "1928:53:61"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "id": 19240,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "authorizeOperator",
+            "nameLocation": "1695:17:61",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19205,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19200,
+                  "mutability": "mutable",
+                  "name": "self",
+                  "nameLocation": "1731:4:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19240,
+                  "src": "1713:22:61",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                    "typeString": "struct ERC777Helper.Operators"
+                  },
+                  "typeName": {
+                    "id": 19199,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 19198,
+                      "name": "Operators",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 19127,
+                      "src": "1713:9:61"
+                    },
+                    "referencedDeclaration": 19127,
+                    "src": "1713:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                      "typeString": "struct ERC777Helper.Operators"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19202,
+                  "mutability": "mutable",
+                  "name": "holder",
+                  "nameLocation": "1745:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19240,
+                  "src": "1737:14:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19201,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1737:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19204,
+                  "mutability": "mutable",
+                  "name": "operator",
+                  "nameLocation": "1761:8:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19240,
+                  "src": "1753:16:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19203,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1753:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1712:58:61"
+            },
+            "returnParameters": {
+              "id": 19206,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1780:0:61"
+            },
+            "scope": 19345,
+            "src": "1686:382:61",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 19283,
+              "nodeType": "Block",
+              "src": "2165:288:61",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        "id": 19254,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "id": 19251,
+                          "name": "operator",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19247,
+                          "src": "2183:8:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "!=",
+                        "rightExpression": {
+                          "expression": {
+                            "id": 19252,
+                            "name": "msg",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 4294967281,
+                            "src": "2195:3:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_magic_message",
+                              "typeString": "msg"
+                            }
+                          },
+                          "id": 19253,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "sender",
+                          "nodeType": "MemberAccess",
+                          "src": "2195:10:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "src": "2183:22:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "hexValue": "4552433737374f70657261746f72733a207265766f6b696e672073656c66206173206f70657261746f72",
+                        "id": 19255,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "2207:44:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_123cf14c65f0c410f0f92f7ec63641dec7325e8e4395c52a2bdbb5956fb306a4",
+                          "typeString": "literal_string \"ERC777Operators: revoking self as operator\""
+                        },
+                        "value": "ERC777Operators: revoking self as operator"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_123cf14c65f0c410f0f92f7ec63641dec7325e8e4395c52a2bdbb5956fb306a4",
+                          "typeString": "literal_string \"ERC777Operators: revoking self as operator\""
+                        }
+                      ],
+                      "id": 19250,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        4294967278,
+                        4294967278
+                      ],
+                      "referencedDeclaration": 4294967278,
+                      "src": "2175:7:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 19256,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2175:77:61",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19257,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2175:77:61"
+                },
+                {
+                  "condition": {
+                    "baseExpression": {
+                      "expression": {
+                        "id": 19258,
+                        "name": "self",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19243,
+                        "src": "2266:4:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                          "typeString": "struct ERC777Helper.Operators storage pointer"
+                        }
+                      },
+                      "id": 19259,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "defaultOperators",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 19114,
+                      "src": "2266:21:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                        "typeString": "mapping(address => bool)"
+                      }
+                    },
+                    "id": 19261,
+                    "indexExpression": {
+                      "id": 19260,
+                      "name": "operator",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 19247,
+                      "src": "2288:8:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "IndexAccess",
+                    "src": "2266:31:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": {
+                    "id": 19281,
+                    "nodeType": "Block",
+                    "src": "2383:64:61",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 19279,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "nodeType": "UnaryOperation",
+                          "operator": "delete",
+                          "prefix": true,
+                          "src": "2397:39:61",
+                          "subExpression": {
+                            "baseExpression": {
+                              "baseExpression": {
+                                "expression": {
+                                  "id": 19273,
+                                  "name": "self",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19243,
+                                  "src": "2404:4:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                    "typeString": "struct ERC777Helper.Operators storage pointer"
+                                  }
+                                },
+                                "id": 19274,
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "operators",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 19120,
+                                "src": "2404:14:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                                  "typeString": "mapping(address => mapping(address => bool))"
+                                }
+                              },
+                              "id": 19276,
+                              "indexExpression": {
+                                "id": 19275,
+                                "name": "holder",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19245,
+                                "src": "2419:6:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "2404:22:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                "typeString": "mapping(address => bool)"
+                              }
+                            },
+                            "id": 19278,
+                            "indexExpression": {
+                              "id": 19277,
+                              "name": "operator",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19247,
+                              "src": "2427:8:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "2404:32:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            }
+                          },
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 19280,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2397:39:61"
+                      }
+                    ]
+                  },
+                  "id": 19282,
+                  "nodeType": "IfStatement",
+                  "src": "2262:185:61",
+                  "trueBody": {
+                    "id": 19272,
+                    "nodeType": "Block",
+                    "src": "2299:78:61",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 19270,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "baseExpression": {
+                                "expression": {
+                                  "id": 19262,
+                                  "name": "self",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19243,
+                                  "src": "2313:4:61",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                    "typeString": "struct ERC777Helper.Operators storage pointer"
+                                  }
+                                },
+                                "id": 19266,
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "revokedDefaultOperators",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 19126,
+                                "src": "2313:28:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_mapping$_t_address_$_t_mapping$_t_address_$_t_bool_$_$",
+                                  "typeString": "mapping(address => mapping(address => bool))"
+                                }
+                              },
+                              "id": 19267,
+                              "indexExpression": {
+                                "id": 19264,
+                                "name": "holder",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19245,
+                                "src": "2342:6:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "2313:36:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                "typeString": "mapping(address => bool)"
+                              }
+                            },
+                            "id": 19268,
+                            "indexExpression": {
+                              "id": 19265,
+                              "name": "operator",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19247,
+                              "src": "2350:8:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "2313:46:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "hexValue": "74727565",
+                            "id": 19269,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "bool",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "2362:4:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            },
+                            "value": "true"
+                          },
+                          "src": "2313:53:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        },
+                        "id": 19271,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2313:53:61"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "id": 19284,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "revokeOperator",
+            "nameLocation": "2083:14:61",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19248,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19243,
+                  "mutability": "mutable",
+                  "name": "self",
+                  "nameLocation": "2116:4:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19284,
+                  "src": "2098:22:61",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                    "typeString": "struct ERC777Helper.Operators"
+                  },
+                  "typeName": {
+                    "id": 19242,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 19241,
+                      "name": "Operators",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 19127,
+                      "src": "2098:9:61"
+                    },
+                    "referencedDeclaration": 19127,
+                    "src": "2098:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                      "typeString": "struct ERC777Helper.Operators"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19245,
+                  "mutability": "mutable",
+                  "name": "holder",
+                  "nameLocation": "2130:6:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19284,
+                  "src": "2122:14:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19244,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2122:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19247,
+                  "mutability": "mutable",
+                  "name": "operator",
+                  "nameLocation": "2146:8:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19284,
+                  "src": "2138:16:61",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19246,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2138:7:61",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2097:58:61"
+            },
+            "returnParameters": {
+              "id": 19249,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2165:0:61"
+            },
+            "scope": 19345,
+            "src": "2074:379:61",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 19296,
+              "nodeType": "Block",
+              "src": "2550:50:61",
+              "statements": [
+                {
+                  "expression": {
+                    "expression": {
+                      "id": 19293,
+                      "name": "self",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 19287,
+                      "src": "2567:4:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                        "typeString": "struct ERC777Helper.Operators storage pointer"
+                      }
+                    },
+                    "id": 19294,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "defaultOperatorsArray",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 19110,
+                    "src": "2567:26:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage",
+                      "typeString": "address[] storage ref"
+                    }
+                  },
+                  "functionReturnParameters": 19292,
+                  "id": 19295,
+                  "nodeType": "Return",
+                  "src": "2560:33:61"
+                }
+              ]
+            },
+            "id": 19297,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "defaultOperators",
+            "nameLocation": "2468:16:61",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19288,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19287,
+                  "mutability": "mutable",
+                  "name": "self",
+                  "nameLocation": "2503:4:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19297,
+                  "src": "2485:22:61",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                    "typeString": "struct ERC777Helper.Operators"
+                  },
+                  "typeName": {
+                    "id": 19286,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 19285,
+                      "name": "Operators",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 19127,
+                      "src": "2485:9:61"
+                    },
+                    "referencedDeclaration": 19127,
+                    "src": "2485:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                      "typeString": "struct ERC777Helper.Operators"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2484:24:61"
+            },
+            "returnParameters": {
+              "id": 19292,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19291,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19297,
+                  "src": "2532:16:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 19289,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2532:7:61",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 19290,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2532:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2531:18:61"
+            },
+            "scope": 19345,
+            "src": "2459:141:61",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 19343,
+              "nodeType": "Block",
+              "src": "2698:309:61",
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "commonType": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "id": 19311,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "expression": {
+                            "expression": {
+                              "id": 19307,
+                              "name": "self",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19300,
+                              "src": "2793:4:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                "typeString": "struct ERC777Helper.Operators storage pointer"
+                              }
+                            },
+                            "id": 19308,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "defaultOperatorsArray",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 19110,
+                            "src": "2793:26:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_array$_t_address_$dyn_storage",
+                              "typeString": "address[] storage ref"
+                            }
+                          },
+                          "id": 19309,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "length",
+                          "nodeType": "MemberAccess",
+                          "src": "2793:33:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "==",
+                        "rightExpression": {
+                          "hexValue": "30",
+                          "id": 19310,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "2830:1:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        },
+                        "src": "2793:38:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      ],
+                      "id": 19306,
+                      "name": "assert",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 4294967293,
+                      "src": "2786:6:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_assert_pure$_t_bool_$returns$__$",
+                        "typeString": "function (bool) pure"
+                      }
+                    },
+                    "id": 19312,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2786:46:61",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19313,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2786:46:61"
+                },
+                {
+                  "expression": {
+                    "id": 19318,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "expression": {
+                        "id": 19314,
+                        "name": "self",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19300,
+                        "src": "2842:4:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                          "typeString": "struct ERC777Helper.Operators storage pointer"
+                        }
+                      },
+                      "id": 19316,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "defaultOperatorsArray",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 19110,
+                      "src": "2842:26:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_address_$dyn_storage",
+                        "typeString": "address[] storage ref"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "id": 19317,
+                      "name": "operators",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 19303,
+                      "src": "2871:9:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                        "typeString": "address[] memory"
+                      }
+                    },
+                    "src": "2842:38:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage",
+                      "typeString": "address[] storage ref"
+                    }
+                  },
+                  "id": 19319,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2842:38:61"
+                },
+                {
+                  "body": {
+                    "id": 19341,
+                    "nodeType": "Block",
+                    "src": "2934:67:61",
+                    "statements": [
+                      {
+                        "expression": {
+                          "id": 19339,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "baseExpression": {
+                              "expression": {
+                                "id": 19331,
+                                "name": "self",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19300,
+                                "src": "2948:4:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                                  "typeString": "struct ERC777Helper.Operators storage pointer"
+                                }
+                              },
+                              "id": 19336,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "memberName": "defaultOperators",
+                              "nodeType": "MemberAccess",
+                              "referencedDeclaration": 19114,
+                              "src": "2948:21:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_mapping$_t_address_$_t_bool_$",
+                                "typeString": "mapping(address => bool)"
+                              }
+                            },
+                            "id": 19337,
+                            "indexExpression": {
+                              "baseExpression": {
+                                "id": 19333,
+                                "name": "operators",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19303,
+                                "src": "2970:9:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                                  "typeString": "address[] memory"
+                                }
+                              },
+                              "id": 19335,
+                              "indexExpression": {
+                                "id": 19334,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19321,
+                                "src": "2980:1:61",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "2970:12:61",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "2948:35:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "hexValue": "74727565",
+                            "id": 19338,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "bool",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "2986:4:61",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            },
+                            "value": "true"
+                          },
+                          "src": "2948:42:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        },
+                        "id": 19340,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2948:42:61"
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 19327,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 19324,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 19321,
+                      "src": "2907:1:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "expression": {
+                        "id": 19325,
+                        "name": "operators",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19303,
+                        "src": "2911:9:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                          "typeString": "address[] memory"
+                        }
+                      },
+                      "id": 19326,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "src": "2911:16:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2907:20:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 19342,
+                  "initializationExpression": {
+                    "assignments": [
+                      19321
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 19321,
+                        "mutability": "mutable",
+                        "name": "i",
+                        "nameLocation": "2900:1:61",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 19342,
+                        "src": "2895:6:61",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 19320,
+                          "name": "uint",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "2895:4:61",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 19323,
+                    "initialValue": {
+                      "hexValue": "30",
+                      "id": 19322,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "2904:1:61",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_0_by_1",
+                        "typeString": "int_const 0"
+                      },
+                      "value": "0"
+                    },
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "2895:10:61"
+                  },
+                  "loopExpression": {
+                    "expression": {
+                      "id": 19329,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "UnaryOperation",
+                      "operator": "++",
+                      "prefix": true,
+                      "src": "2929:3:61",
+                      "subExpression": {
+                        "id": 19328,
+                        "name": "i",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19321,
+                        "src": "2931:1:61",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 19330,
+                    "nodeType": "ExpressionStatement",
+                    "src": "2929:3:61"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "2890:111:61"
+                }
+              ]
+            },
+            "id": 19344,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setupDefaultOperators",
+            "nameLocation": "2615:21:61",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19304,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19300,
+                  "mutability": "mutable",
+                  "name": "self",
+                  "nameLocation": "2655:4:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19344,
+                  "src": "2637:22:61",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                    "typeString": "struct ERC777Helper.Operators"
+                  },
+                  "typeName": {
+                    "id": 19299,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 19298,
+                      "name": "Operators",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 19127,
+                      "src": "2637:9:61"
+                    },
+                    "referencedDeclaration": 19127,
+                    "src": "2637:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Operators_$19127_storage_ptr",
+                      "typeString": "struct ERC777Helper.Operators"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19303,
+                  "mutability": "mutable",
+                  "name": "operators",
+                  "nameLocation": "2678:9:61",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19344,
+                  "src": "2661:26:61",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 19301,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2661:7:61",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 19302,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2661:9:61",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2636:52:61"
+            },
+            "returnParameters": {
+              "id": 19305,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2698:0:61"
+            },
+            "scope": 19345,
+            "src": "2606:401:61",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "scope": 19346,
+        "src": "224:2786:61",
+        "usedErrors": []
+      }
+    ],
+    "src": "35:2976:61"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.14+commit.80d49f37.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.7",
+  "updatedAt": "2022-06-16T09:19:12.182Z",
+  "devdoc": {
+    "author": "Superfluid",
+    "kind": "dev",
+    "methods": {},
+    "title": "ERC777 helper library",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}
